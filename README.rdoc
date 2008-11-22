@@ -1,0 +1,59 @@
+= camping/test, a lightweight testing framework for Camping 2.0
+
+This is, in my opinion, what Mosquito should have been. More docs coming soon.
+
+== Usage
+
+  require 'your_app'
+  require 'camping/test'
+  
+  module YourApp::Tests
+    class TestSomeBasicStuff < Web
+      fixtures :your_app_articles
+      
+      def setup
+        super
+        # Do other stuff here
+      end
+      
+      test "should get index" do
+        get
+        assert_response :success
+        assert_match_body "Some text on the front page"
+      end                                              
+      
+      test "should get view" do
+        get '/view/1'
+        assert_response :ok
+        assert_kind_of Models::Article, @assigns[:article]
+        assert_match_body "Some text in the article"
+      end
+      
+      test "should change profile" do
+        post '/change-profile', :new_photo => upload("picture.jpg")
+        assert_response :ok
+        assert_match_body "The picture has been uploaded!"
+      end
+    end
+    
+    class TestArticle < Model
+      fixtures :your_app_articles
+      
+      test "should create" do
+        article = Article.create(:title => "Awesome!")
+        assert article.valid?
+      end
+    end
+  end
+  
+== Details
+
+* The +create+-method is automatically called when you require 'camping/test'
+* Remeber to call +super+ in your setups
+* If your app is using ActiveRecord, it will use a Sqlite3 :memory: database and load any fixtures availble
+* Fixtures goes in test/fixtures. Remember that Camping prepends the app name to the model name, so Post == test/fixtures/blog_posts.yml
+* If you *don't* use ActiveRecord, camping/test will not load any unnecessary code
+* All your models are loaded into Camping::Tests::Model and will be available in sub-classes
+* Access all the instance variables trough @assigns
+* Place your tests wherever you like, and name them whatever you like
+
