@@ -1,7 +1,39 @@
 module Camping
   TestUtils = Object.const_get("Cam\ping").const_get(:TestUtils) unless defined?(TestUtils)
+
   module Tests
-    class Test < ::Test::Unit::TestCase
+    # Checks if models have been loaded
+    if Models.autoload?(:Base).nil? && Object.const_defined?(:ActiveRecord) && Models::Base == ActiveRecord::Base
+      require 'active_record/fixtures'
+      require 'active_record/test_case'
+      
+      # Our TestCase-class with fixtures
+      parent = Class.new(ActiveRecord::TestCase) do
+        include ActiveRecord::TestFixtures
+        self.fixture_path = "test/fixtures/"
+        self.use_instantiated_fixtures  = false
+        self.use_transactional_fixtures = true
+        self
+      end
+      
+      # connect!
+      Models::Base.establish_connection(:adapter => 'sqlite3', :database => 'test.db')
+      # dummy so AR thinks we've connected
+      Models::Base.configurations['test'] = true
+      
+      # register all models to fixture_class_names, so AR can load fixtures properly
+      Models.constants.each do |const|
+        klass = Models.const_get(const)
+        if klass.is_a?(Class) && klass < Models::Base
+          parent.fixture_class_names[klass.table_name.to_sym] = klass
+        end
+      end
+    else
+      # Old, boring Test::Unit
+      parent = ::Test::Unit::TestCase
+    end
+    
+    class Test < parent
       include TestUtils
       undef default_test
       
@@ -13,10 +45,12 @@ module Camping
     end
     
     class Model < Test
+      include Camping::Models
     end
     
     class Web < Test
       include Assertions
+      
       def setup
         super
         @app = C
@@ -59,13 +93,5 @@ module Camping
   end
   
   include TestUtils::AssignStealer
-  
-  if Models.autoload?(:Base).nil? && Object.const_defined?(:ActiveRecord) && Models::Base == ActiveRecord::Base
-    require 'active_record/fixtures'
-    require 'sqlite3_api'
-    Models::Base.establish_connection(:adapter => 'sqlite3', :database => ':memory:')
-    Tests::Model.send(:include, Models)
-  end
-  
   create if respond_to?(:create)
 end
