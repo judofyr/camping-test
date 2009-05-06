@@ -17,7 +17,7 @@ module Camping
       end
       
       # connect!
-      Models::Base.establish_connection(:adapter => 'sqlite3', :database => 'test.db')
+      Models::Base.establish_connection(:adapter => 'sqlite3', :database => ':memory:')
       # dummy so AR thinks we've connected
       Models::Base.configurations['test'] = true
       
