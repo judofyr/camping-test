@@ -1,19 +1,9 @@
 # Camping::TestUtils contains various classes and modules needed by camping/test
 module Camping::TestUtils
-  ASSIGNS = "Camping.assigns"
-  Server = Camping::Server
-  
-  # A service overload which saves the cookies and sessions in the headers. 
-  module AssignStealer
-    def service(*a)
-      super
-    ensure
-      @headers[ASSIGNS] = instance_variables.inject({}) do |assigns, ivar|
-        assigns[ivar[1..-1].to_sym] = instance_variable_get(ivar)
-        assigns
-      end
-    end
-  end
+  ASSIGNS = "camping.assigns"
+  COOKIES = "camping.cookies"
+  STATE   = "camping.state"
+  Server  = Camping::Server
   
   # Used for mocking file-uploads. You will probably use it through
   # the Tests::Web#upload helper.

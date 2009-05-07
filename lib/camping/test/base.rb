@@ -1,5 +1,6 @@
 module Camping
   TestUtils = Object.const_get("Cam\ping").const_get(:TestUtils) unless defined?(TestUtils)
+  include TestUtils
 
   module Tests
     # Checks if models have been loaded
@@ -49,10 +50,13 @@ module Camping
     end
     
     class Web < Test
+      attr_reader :state, :cookies
       include Assertions
       
       def setup
         super
+        @state = Camping::H.new
+        @cookies = Camping::H.new
         @app = C
         @app = Server::XSendfile.new(@app)
         @request = Rack::MockRequest.new(@app)
@@ -62,6 +66,8 @@ module Camping
         method = method.to_s.upcase
         opts = FormBuilder.new(method, input).build
         path << "?#{opts[:query]}" if opts[:query]
+        opts[STATE] = @state
+        opts[COOKIES] = @cookies
         @response = @request.request(method, path, opts)
         
         @assigns = @response.original_headers.delete(ASSIGNS)
@@ -92,6 +98,21 @@ module Camping
     end
   end
   
-  include TestUtils::AssignStealer
+  Base.class_eval do
+    service = Base.instance_method(:service)
+    define_method(:service) do |*a|
+      @cookies.update(@env[COOKIES])
+      @state.update(@env[STATE]) if @state
+      begin
+        service.bind(self).call(*a)
+      ensure
+        @headers[ASSIGNS] = instance_variables.inject({}) do |assigns, ivar|
+          assigns[ivar[1..-1].to_sym] = instance_variable_get(ivar)
+          assigns
+        end
+      end
+    end
+  end
+  
   create if respond_to?(:create)
 end

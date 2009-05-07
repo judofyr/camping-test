@@ -10,5 +10,3 @@ Camping::S << SOURCE
 Camping::Apps.each do |app|
   eval(SOURCE.gsub("Camping", app.to_s))
 end
-
-Test::Unit::TestCase.fixture_path = "test/fixtures/" if Test::Unit::TestCase.respond_to?(:fixture_path)
