@@ -36,7 +36,7 @@ module Camping
     
     class Test < parent
       include TestUtils
-      undef default_test
+      undef default_test if defined? default_test
       
       def self.test(name, &blk)
         meth = "test: #{name}"
