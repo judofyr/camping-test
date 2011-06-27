@@ -14,6 +14,7 @@ module Camping
         self.fixture_path = "test/fixtures/"
         self.use_instantiated_fixtures  = false
         self.use_transactional_fixtures = true
+        def self.name; inspect; end
         self
       end
       
